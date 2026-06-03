@@ -13,6 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from Web_ReKYC_Config import EMAIL_REPORT
+from teams_reporter import send_teams_report
 
 
 _original_print = builtins.print
@@ -37,35 +38,45 @@ def send_report(status, video_path, log_lines, step_results, duration):
         row_color = "#d1fae5" if step["status"] == "PASS" else "#fee2e2"
         step_rows += f"""
         <tr style="background:{row_color}">
-            <td style="padding:3px;border:1px solid #888">{step["step"]}</td>
-            <td style="padding:3px;border:1px solid #888">{step["status"]}</td>
-            <td style="padding:3px;border:1px solid #888">{html.escape(step.get("name", ""))}</td>
-            <td style="padding:3px;border:1px solid #888;color:#dc2626">{html.escape(step.get("reason", ""))}</td>
+            <td style="padding:10px;border:1px solid #d1d5db">{step["step"]}</td>
+            <td style="padding:10px;border:1px solid #d1d5db;font-weight:700;color:{color}">{step["status"]}</td>
+            <td style="padding:10px;border:1px solid #d1d5db">{html.escape(step.get("name", ""))}</td>
+            <td style="padding:10px;border:1px solid #d1d5db">{html.escape(step.get("reason", ""))}</td>
         </tr>
         """
 
     body = f"""
     <html>
-    <body style="font-family:Arial,sans-serif;padding:20px;color:#222">
-        <h2>Web ReKYC Automation Report</h2>
-        <p><b>Code Review:</b> PASS</p>
-        <p><b>Test Execution:</b> <span style="color:{color}"><b>{status}</b></span></p>
-        <p><b>Duration:</b> {duration}</p>
-        <h3>Step Results</h3>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-                <tr style="background:#eee">
-                    <th style="padding:4px;border:1px solid #888;width:70px">Step</th>
-                    <th style="padding:4px;border:1px solid #888;width:120px">Status</th>
-                    <th style="padding:4px;border:1px solid #888">Name</th>
-                    <th style="padding:4px;border:1px solid #888">Reason</th>
-                </tr>
-            </thead>
-            <tbody>{step_rows}</tbody>
-        </table>
-        <p><b>Time:</b> {now}</p>
-        <p><b>Video:</b> {"Attached" if video_path else "No video recording found"}</p>
-        {f"<p><b>Video File:</b> {html.escape(video_path)}</p>" if video_path else ""}
+    <body style="margin:0;background:#f4f6f8;font-family:Arial,sans-serif;color:#111827">
+        <div style="max-width:1080px;margin:0 auto;padding:20px">
+            <div style="background:#ffffff;border:1px solid #e5e7eb">
+                <div style="background:#1f3f68;color:#ffffff;padding:22px 24px">
+                    <div style="font-size:22px;font-weight:700">Web ReKYC Automation Report</div>
+                    <div style="font-size:13px;margin-top:6px">Generated: {now} | Duration: {duration}</div>
+                </div>
+                <div style="padding:18px 24px 24px">
+                    <div style="font-size:14px;font-weight:700;margin-bottom:14px">
+                        Code Review: PASS &nbsp;|&nbsp; Test Execution:
+                        <span style="background:{'#dcfce7' if status == 'PASS' else '#fee2e2'};color:{color};padding:7px 18px;border-radius:5px">{status}</span>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:13px">
+                        <thead>
+                            <tr style="background:#344153;color:#ffffff;text-align:left">
+                                <th style="padding:10px;border:1px solid #4b5563">Step</th>
+                                <th style="padding:10px;border:1px solid #4b5563">Status</th>
+                                <th style="padding:10px;border:1px solid #4b5563">Name</th>
+                                <th style="padding:10px;border:1px solid #4b5563">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>{step_rows}</tbody>
+                    </table>
+                    <div style="font-size:12px;color:#4b5563;margin-top:14px">
+                        Video: {"Attached" if video_path else "No video recording found"}
+                        {f"<br>Video File: {html.escape(video_path)}" if video_path else ""}
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
     </html>
     """
@@ -93,11 +104,21 @@ def send_report(status, video_path, log_lines, step_results, duration):
             print("Video too large, skipped")
 
     try:
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        server.login(EMAIL_REPORT["sender"], EMAIL_REPORT["password"])
+        server = smtplib.SMTP_SSL(EMAIL_REPORT["smtp_server"], EMAIL_REPORT["smtp_port"])
+        smtp_username = EMAIL_REPORT.get("username", EMAIL_REPORT["sender"])
+        server.login(smtp_username, EMAIL_REPORT["password"])
         server.sendmail(EMAIL_REPORT["sender"], receivers, msg.as_string())
         server.quit()
         print("Mail sent successfully")
+        send_teams_report(
+            title=subject,
+            status=status,
+            html_body=body,
+            video_path=video_path,
+            step_results=step_results,
+            duration=duration,
+            flow_details={"report_name": "Web ReKYC Automation Report"},
+        )
     except Exception as e:
         print("Mail failed:", e)
 

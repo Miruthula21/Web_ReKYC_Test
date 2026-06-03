@@ -21,7 +21,10 @@ REKYC_JPG_FILE  = "signatureImage2024_03_05_10_29_04_654643.jpg"
 # =====================================================
 
 EMAIL_REPORT = {
-    "sender"   : "miruthulak21@gmail.com",
-    "password" : "jbor rqbh eniq pkpw",
-    "receiver" : ["miruthulak21@gmail.com", "elamukil@navia.co.in"]
+    "sender"      : "aialerts@navia.co.in",
+    "username"    : "emailapikey",
+    "password"    : "PHtE6r1eS7jqiG998kUH7afqRZKmN4gtrrw1KQQTt4sTDfJRS01U+d8qlTCwqU0sAPJCRqHKmY1p4rqb4e+Ed26/YW8ZDWqyqK3sx/VYSPOZsbq6x00auVwYdELbVIXqe9di0CzRst3YNA==",
+    "receiver"    : ["miruthulak21@gmail.com", "elamukil@navia.co.in"],
+    "smtp_server" : "smtp.zatpatmail.com",
+    "smtp_port"   : 465
 }
